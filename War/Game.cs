@@ -1,10 +1,12 @@
 using System;
+using LanguageExt;
 
 namespace War
 {
 	public class Game
 	{
 		private CardSuit _trump;
+		private const int PlayersCount = 2;
 		
 		public void Start()
 		{
@@ -14,45 +16,40 @@ namespace War
 			_trump = CardSuit.GetRandom();
 			Console.WriteLine($"Trump: {_trump.Value}");
 			
-			(CardDeck partOne, CardDeck partTwo) = deck.Split();
-			Players players = new Players(partOne, partTwo);
+			Lst<CardDeck> parts = deck.Split(PlayersCount);
+			GameState gameState = new GameState(parts);
 			
-			GameLoop(players);
+			GameLoop(gameState);
 		}
 
-		private void GameLoop(Players players)
+		private void GameLoop(GameState gameState)
 		{
-			while (!players.Player1.HandDeck.IsEmpty && !players.Player2.HandDeck.IsEmpty)
+			while (gameState.Players.All(p => !p.HandDeck.IsEmpty))
 			{
 				Console.ReadKey();
-				players = Turn(players);
+				gameState = Turn(gameState);
 			}
-			
-			if (players.Player1.ScoreDeck.Count > players.Player2.ScoreDeck.Count)
+
+			if (gameState.Players[0].ScoreDeck.Count > gameState.Players[1].ScoreDeck.Count)
 				Console.WriteLine($"Player 1 win! 🎉");
-			else if (players.Player1.ScoreDeck.Count > players.Player2.ScoreDeck.Count)
+			else if (gameState.Players[1].ScoreDeck.Count > gameState.Players[0].ScoreDeck.Count)
 				Console.WriteLine($"Player 2 win! 🎉");
 			else
 				Console.WriteLine($"Draw 🤝");
-				
 		}
 
-		private Players Turn(Players players)
+		private GameState Turn(GameState gameState)
 		{
-			(Card cardOne, CardDeck deckOne) = players.Player1.HandDeck.Pop();
-			(Card cardTwo, CardDeck deckTwo) = players.Player2.HandDeck.Pop();
+			(Card cardOne, GameState gameState1) = gameState.PlayerTakeFromTop(0);
+			(Card cardTwo, GameState gameState2) = gameState1.PlayerTakeFromTop(1);
 
-			players.Player1.HandDeck = deckOne;
-			players.Player2.HandDeck = deckTwo;
-			
-			Console.WriteLine($"Player 1 H: {players.Player1.HandDeck.Count} S: {players.Player1.ScoreDeck.Count} |\t{cardOne}\t{cardTwo}\t| {players.Player2.HandDeck.Count} S: {players.Player2.ScoreDeck.Count} Player 2");
+			Console.WriteLine($"Player 1 H: {gameState.Players[0].HandDeck.Count} S: {gameState.Players[0].ScoreDeck.Count} |\t{cardOne}\t{cardTwo}\t| {gameState.Players[1].HandDeck.Count} S: {gameState.Players[1].ScoreDeck.Count} Player 2");
 
-			players = CompareCards(players, cardOne, cardTwo);
-
-			return players;
+			GameState gameState3 = CompareCards(gameState2, cardOne, cardTwo);
+			return gameState3;
 		}
 
-		private Players CompareCards(Players players, Card cardOne, Card cardTwo)
+		private GameState CompareCards(GameState gameState, Card cardOne, Card cardTwo)
 		{
 			bool cardOneIsTrump = cardOne.IsTrump(_trump);
 			bool cardTwoIsTrump = cardTwo.IsTrump(_trump);
@@ -61,44 +58,30 @@ namespace War
 			{
 				if (cardOne.Value.Value > cardTwo.Value.Value)
 				{
-					Player1Win(players, cardOne, cardTwo);
+					return CardsToScore(gameState, cardOne, cardTwo, 0, 0);
 				}
-				else if (cardOne.Value.Value < cardTwo.Value.Value)
+
+				if (cardOne.Value.Value < cardTwo.Value.Value)
 				{
-					Player2Win(players, cardOne, cardTwo);
+					return CardsToScore(gameState, cardOne, cardTwo, 1, 1);
 				}
-				else
-				{
-					Draw(players, cardOne, cardTwo);
-				}
-			}
-			else if (cardOneIsTrump)
-			{
-				Player1Win(players, cardOne, cardTwo);
-			}
-			else
-			{
-				Player2Win(players, cardOne, cardTwo);
+
+				return CardsToScore(gameState, cardOne, cardTwo, 0, 1);
 			}
 
-			return players;
-			
-			void Player1Win(Players p, Card card1, Card card2)
+			if (cardOneIsTrump)
 			{
-				p.Player1.ScoreDeck = p.Player1.ScoreDeck.Push(card1);
-				p.Player1.ScoreDeck = p.Player1.ScoreDeck.Push(card2);
+				return CardsToScore(gameState, cardOne, cardTwo, 0, 0);
 			}
-			
-			void Player2Win(Players p, Card card1, Card card2)
+
+			return CardsToScore(gameState, cardOne, cardTwo, 1, 1);
+
+			GameState CardsToScore(GameState gs, Card card1, Card card2, int cardOneTargetId,  int cardTwoTargetId)
 			{
-				p.Player2.ScoreDeck = p.Player2.ScoreDeck.Push(card1);
-				p.Player2.ScoreDeck = p.Player2.ScoreDeck.Push(card2);
-			}
-			
-			void Draw(Players p, Card card1, Card card2)
-			{
-				p.Player1.ScoreDeck = p.Player1.ScoreDeck.Push(card1);
-				p.Player2.ScoreDeck = p.Player2.ScoreDeck.Push(card2);
+				GameState gs1 = gs.PlayerWithCard(cardOneTargetId, card1);
+				GameState gs2 = gs1.PlayerWithCard(cardTwoTargetId, card2);
+
+				return gs2;
 			}
 		}
 	}
