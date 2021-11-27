@@ -1,41 +1,58 @@
+using System;
+using LanguageExt;
+
 namespace War
 {
 	public record Player
 	{
-		public int Id { get; init; }
-		public CardDeck HandDeck { get; init; }
-		public CardDeck ScoreDeck { get; init; }
+		public int Id { get; }
+		public CardDeck HandDeck { get; }
+		public CardDeck ScoreDeck { get; }
+		public Card.Card OpenCard { get; }
 
-		public Player(int id, CardDeck deck)
+		public Player(CardDeck handDeck)
 		{
-			Id = id;
-			HandDeck = deck;
+			Id = new Random().Next() % 100;
+			HandDeck = handDeck;
 			ScoreDeck = CardDeck.Empty();
 		}
 
-		private Player(int id, CardDeck hanDeck, CardDeck scoreDeck)
+		private Player(int id, CardDeck handDeck, CardDeck scoreDeck)
 		{
 			Id = id;
-			HandDeck = hanDeck;
+			HandDeck = handDeck;
 			ScoreDeck = scoreDeck;
 		}
-
-		public Player ScoreWithCard(Card card)
+		
+		private Player(int id, CardDeck handDeck, CardDeck scoreDeck, Card.Card openCard)
 		{
-			CardDeck newScoreDeck = ScoreDeck.WithCard(card);
+			Id = id;
+			HandDeck = handDeck;
+			ScoreDeck = scoreDeck;
+			OpenCard = openCard;
+		}
+
+		public Player OpenCardToScore()
+		{
+			CardDeck newScoreDeck = ScoreDeck.WithCard(OpenCard);
 			return new Player(Id, HandDeck, newScoreDeck);
 		}
 
-		public Player ScoreWithCards(Card[] cards)
+		public Player ScoreWithCards(Lst<Card.Card> cards)
 		{
 			CardDeck newScoreDeck = ScoreDeck.WithCards(cards);
 			return new Player(Id, HandDeck, newScoreDeck);
 		}
 
-		public (Card card, Player decks) TakeFromTop()
+		public Player TakeOpenCard()
 		{
-			(Card card, CardDeck deck) = HandDeck.TakeFromTop();
-			return (card, new Player(Id, deck, ScoreDeck));
+			return new Player(Id, HandDeck, ScoreDeck, null);
+		}
+
+		public Player OpenCardFromTop()
+		{
+			(Card.Card card, CardDeck deck) = HandDeck.TakeFromTop();
+			return new Player(Id, deck, ScoreDeck, card);
 		}
 	}
 }

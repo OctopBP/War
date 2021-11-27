@@ -1,4 +1,4 @@
-namespace War
+namespace War.Card
 {
 	public class CardValue
 	{
