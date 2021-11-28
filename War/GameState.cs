@@ -17,7 +17,7 @@ namespace War
 
 		public GameState PrintState()
 		{
-			Console.WriteLine("New turn");
+			Console.WriteLine("- New round -");
 
 			Players
 				.OrderBy(p => p.Id).ToList()
@@ -30,31 +30,40 @@ namespace War
 
 		public GameState CompareCards(CardSuit trump)
 		{
-			int maxCard = Players
-				.Select(player => player.OpenCard)
-				.Max(card => card.Val(trump));
+			CardComparer comparer = new(trump);
 
-			Lst<Player> winners = new(Enumerable.Where(Players, player => player.OpenCard.Val(trump) == maxCard));
+			Card.Card maxCard = Players
+				.Select(player => player.OpenCard)
+				.OrderBy(card => card, comparer)
+				.Last();
+
+			Lst<Player> winners =
+				new(Players.Where(player => comparer.Compare(player.OpenCard, maxCard) == 0));
 
 			if (winners.Count > 1)
 				return OnDraw();
 
-			return OnWin(trump, maxCard, winners);
+			return OnWin(winners);
 		}
 
 		private GameState OnDraw()
 		{
+			Console.WriteLine($"Draw in this round");
+
 			Lst<Player> players = Players.Select(player => player.OpenCardToScore());
 			return this with { Players = players };
 		}
 
-		private GameState OnWin(CardSuit trump, int maxCard, Lst<Player> winners)
+		private GameState OnWin(Lst<Player> winners)
 		{
-			Lst<Player> losers = new(Players.Where(player => player.OpenCard.Val(trump) != maxCard));
+			Lst<Player> losers = new(Players.Where(player => !winners.Contains(player)));
 			Lst<Card.Card> cards = Players.Select(p => p.OpenCard);
 			Lst<Player> newWinners = new(winners.Select(p => p.CardsToScores(cards)));
 			Lst<Player> players = newWinners.AddRange(losers);
 			Lst<Player> newPlayers = players.Select(p => p.TakeOpenCard());
+
+			Console.WriteLine(
+				$"#{string.Join(", #", winners.Select(p => p.Id))} get {cards.Count} score{(cards.Count > 1 ? "s" : "")}");
 
 			return this with { Players = newPlayers };
 		}
