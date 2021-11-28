@@ -9,20 +9,20 @@ namespace War
 	public class Game
 	{
 		private const int PlayersCount = 2;
-		
+
 		private CardSuit _trump;
-		
+
 		public void Start()
 		{
 			CardDeck deck = CardDeck.CreateFull();
 			CardDeck shuffledDeck = deck.Shuffle();
-			
+
 			_trump = CardSuit.GetRandom();
 			Console.WriteLine($"Trump: {_trump.Value}");
-			
+
 			Lst<CardDeck> parts = shuffledDeck.Split(PlayersCount);
-			GameState gameState = new GameState(parts);
-			
+			GameState gameState = new(parts);
+
 			GameLoop(gameState);
 		}
 
@@ -42,7 +42,7 @@ namespace War
 			GameState newGameState = gameState
 				.OpenCards()
 				.PrintState();
-			
+
 			return CompareCards(newGameState);
 		}
 
@@ -50,7 +50,7 @@ namespace War
 		{
 			return gameState.CompareCards(_trump);
 		}
-		
+
 		private void GameResult(GameState gameState)
 		{
 			int maxScore = gameState.Players

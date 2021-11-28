@@ -6,94 +6,59 @@ using War.Card;
 
 namespace War
 {
-	public record CardDeck
+	public record CardDeck(Lst<Card.Card> Deck)
 	{
-		private readonly Lst<Card.Card> _deck;
-
-		public int Count => _deck.Count;
-		public bool IsEmpty => _deck.Count == 0;
-
-		private CardDeck(Lst<Card.Card> deck)
-		{
-			_deck = deck;
-		}
-
-		public CardDeck WithCard(Card.Card card)
-		{
-			return new CardDeck(_deck.Add(card));
-		}
-		
-		public CardDeck WithCards(Lst<Card.Card> cards)
-		{
-			return new CardDeck(_deck.AddRange(cards));
-		}
-		
-		public (Card.Card card, CardDeck deck) TakeFromTop()
-		{
-			Card.Card card = _deck.Last();
-			Lst<Card.Card> deck = _deck.Remove(card);
-			return (card, new CardDeck(deck));
-		}
+		public int Count => Deck.Count;
+		public bool IsEmpty => Count == 0;
 
 		public static CardDeck CreateFull()
 		{
 			Lst<Card.Card> deck = CreateDeck();
 			return new CardDeck(deck);
 		}
-		
-		public static CardDeck Empty()
-		{
-			Lst<Card.Card> deck = Lst<Card.Card>.Empty;
-			return new CardDeck(deck);
-		}
 
 		public CardDeck Shuffle()
 		{
-			Stck<Card.Card> shuffledDeck = new Stck<Card.Card>(_deck);
-			IList<Card.Card> shuffledList = shuffledDeck.ToList().Shuffle();
-			return new CardDeck(new Lst<Card.Card>(shuffledList));
+			return this with { Deck = Deck.Shuffle() };
 		}
 
 		public Lst<CardDeck> Split(int count)
 		{
-			int partSize = _deck.Count / count;
+			int partSize = Deck.Count / count;
 
-			Lst<CardDeck> decks = new Lst<CardDeck>();
+			Lst<CardDeck> decks = new();
 			for (int i = 0; i < count; i++)
 			{
 				Lst<Card.Card> deckPart = GetPart(i * partSize, partSize);
 				decks = decks.Add(new CardDeck(deckPart));
 			}
-			
+
 			return decks;
 
-			Lst<Card.Card> GetPart(int index, int count)
+			Lst<Card.Card> GetPart(int index, int parts)
 			{
-				List<Card.Card> cards = new List<Card.Card>();
-				cards.AddRange(_deck.ToList().GetRange(index, count));
+				List<Card.Card> cards = new();
+				cards.AddRange(Deck.ToList().GetRange(index, parts));
 				return new Lst<Card.Card>(cards);
 			}
 		}
 
 		private static Lst<Card.Card> CreateDeck()
 		{
-			Lst<Card.Card> deck = new();
+			Suit[] suits = (Suit[]) Enum.GetValues(typeof(Suit));
+			Value[] values = (Value[]) Enum.GetValues(typeof(Value));
 
-			foreach (Suit suit in (Suit[])Enum.GetValues(typeof(Suit)))
-			{
-				foreach (Value value in (Value[])Enum.GetValues(typeof(Value)))
-				{
-					Card.Card card = new Card.Card(suit, value);
-					deck = deck.Add(card);
-				}
-			}
+			Lst<Card.Card> deck = suits.Aggregate(deck,
+				(current1, suit) =>
+					values.Aggregate(current1, (current, value) => current.Add(new Card.Card(suit, value))));
+
 
 			return deck;
 		}
 
 		public override string ToString()
 		{
-			Arr<string> array = _deck
+			Arr<string> array = Deck
 				.Select(card => card.ToString())
 				.ToArray();
 

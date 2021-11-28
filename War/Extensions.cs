@@ -1,26 +1,29 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using LanguageExt;
 
 namespace War
 {
 	public static class Extensions
 	{
-		private static Random rng = new Random();  
+		private static readonly Random Rnd = new();
 
-		public static Stack<T> Shuffle<T>(this Stack<T> stack)
+		public static Lst<T> Shuffle<T>(this Lst<T> lst)
 		{
-			List<T> list = stack.ToList();
-			list.Shuffle();
-			return new Stack<T>(list);
+			IList<T> list = lst
+				.ToList()
+				.Shuffle();
+
+			return new Lst<T>(list);
 		}
-		
+
 		public static IList<T> Shuffle<T>(this IList<T> list)
 		{
-			int n = list.Count;  
-			while (n > 1) {  
-				n--;  
-				int k = rng.Next(n + 1);  
+			int n = list.Count;
+			while (n > 1)
+			{
+				n--;
+				int k = Rnd.Next(n + 1);
 				(list[k], list[n]) = (list[n], list[k]);
 			}
 

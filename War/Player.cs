@@ -3,56 +3,33 @@ using LanguageExt;
 
 namespace War
 {
-	public record Player
+	public record Player(int Id, CardDeck HandDeck, CardDeck ScoreDeck, Card.Card OpenCard = null)
 	{
-		public int Id { get; }
-		public CardDeck HandDeck { get; }
-		public CardDeck ScoreDeck { get; }
-		public Card.Card OpenCard { get; }
-
-		public Player(CardDeck handDeck)
-		{
-			Id = new Random().Next() % 100;
-			HandDeck = handDeck;
-			ScoreDeck = CardDeck.Empty();
-		}
-
-		private Player(int id, CardDeck handDeck, CardDeck scoreDeck)
-		{
-			Id = id;
-			HandDeck = handDeck;
-			ScoreDeck = scoreDeck;
-		}
-		
-		private Player(int id, CardDeck handDeck, CardDeck scoreDeck, Card.Card openCard)
-		{
-			Id = id;
-			HandDeck = handDeck;
-			ScoreDeck = scoreDeck;
-			OpenCard = openCard;
-		}
+		public Player(CardDeck handDeck) :
+			this(new Random().Next() % 100, handDeck, new CardDeck(new Lst<Card.Card>())) { }
 
 		public Player OpenCardToScore()
 		{
-			CardDeck newScoreDeck = ScoreDeck.WithCard(OpenCard);
-			return new Player(Id, HandDeck, newScoreDeck);
+			CardDeck newScoreDeck = ScoreDeck with { Deck = ScoreDeck.Deck.Add(OpenCard) };
+			return this with { ScoreDeck = newScoreDeck };
 		}
 
-		public Player ScoreWithCards(Lst<Card.Card> cards)
+		public Player CardsToScores(Lst<Card.Card> cards)
 		{
-			CardDeck newScoreDeck = ScoreDeck.WithCards(cards);
-			return new Player(Id, HandDeck, newScoreDeck);
+			CardDeck newScoreDeck = ScoreDeck with { Deck = ScoreDeck.Deck.AddRange(cards) };
+			return this with { ScoreDeck = newScoreDeck };
 		}
 
 		public Player TakeOpenCard()
 		{
-			return new Player(Id, HandDeck, ScoreDeck, null);
+			return this with { OpenCard = null };
 		}
 
 		public Player OpenCardFromTop()
 		{
-			(Card.Card card, CardDeck deck) = HandDeck.TakeFromTop();
-			return new Player(Id, deck, ScoreDeck, card);
+			Card.Card card = HandDeck.Deck.First();
+			CardDeck newHandDeck = HandDeck with { Deck = HandDeck.Deck.Remove(card) };
+			return this with { HandDeck = newHandDeck, OpenCard = card };
 		}
 	}
 }
