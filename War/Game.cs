@@ -1,13 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using LanguageExt;
-using War.Card;
+using War.card;
 
-namespace War
-{
-	public class Game
-	{
+namespace War {
+	public record Game(CardSuit trump, IComparer<Card> cmp) {
 		private const int PlayersCount = 2;
 
 		private CardSuit _trump;
@@ -18,7 +17,7 @@ namespace War
 			CardDeck shuffledDeck = deck.Shuffle();
 
 			_trump = CardSuit.GetRandom();
-			Console.WriteLine($"Trump: {_trump.Value}");
+			Console.WriteLine($"Trump: {_trump.value}");
 
 			Lst<CardDeck> parts = shuffledDeck.Split(PlayersCount);
 			GameState gameState = new(parts);

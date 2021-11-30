@@ -1,9 +1,10 @@
 using System;
 using LanguageExt;
+using War.card;
 
 namespace War
 {
-	public record Player(int Id, CardDeck HandDeck, CardDeck ScoreDeck, Card.Card OpenCard = null)
+	public record Player(int Id, CardDeck HandDeck, CardDeck ScoreDeck, Option<Card> OpenCard = null)
 	{
 		public Player(CardDeck handDeck) :
 			this(new Random().Next() % 100, handDeck, new CardDeck(new Lst<Card.Card>())) { }

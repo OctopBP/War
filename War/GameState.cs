@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using LanguageExt;
-using War.Card;
+using War.card;
 
 namespace War
 {

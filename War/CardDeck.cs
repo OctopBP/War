@@ -1,68 +1,29 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using LanguageExt;
-using War.Card;
+using War.card;
 
-namespace War
-{
-	public record CardDeck(Lst<Card.Card> Deck)
-	{
+namespace War {
+	public record CardDeck(Arr<Card> Deck) {
 		public int Count => Deck.Count;
 		public bool IsEmpty => Count == 0;
+		
+		public static Eff<CardDeck> shuffled(Random rng) =>
+			Eff<CardDeck>.Effect(() => new CardDeck(new Arr<Card>(Card.all.OrderBy(_ => rng.Next()))));
 
-		public static CardDeck CreateFull()
-		{
-			Lst<Card.Card> deck = CreateDeck();
-			return new CardDeck(deck);
+		public Lst<CardDeck> Split(int numberOfParts) {
+			var partSize = Deck.Count / numberOfParts;
+			return new(
+				Enumerable.Range(0, numberOfParts)
+					.Select(partIndex => new CardDeck(new Arr<Card>(Deck.Skip(partSize * partIndex).Take(partSize))))
+			);
 		}
 
-		public CardDeck Shuffle()
-		{
-			return this with { Deck = Deck.Shuffle() };
+		public (CardDeck player1, CardDeck player2) split2() {
+			var lst = Split(2);
+			return (lst[0], lst[1]);
 		}
 
-		public Lst<CardDeck> Split(int count)
-		{
-			int partSize = Deck.Count / count;
-
-			Lst<CardDeck> decks = new();
-			for (int i = 0; i < count; i++)
-			{
-				Lst<Card.Card> deckPart = GetPart(i * partSize, partSize);
-				decks = decks.Add(new CardDeck(deckPart));
-			}
-
-			return decks;
-
-			Lst<Card.Card> GetPart(int index, int parts)
-			{
-				List<Card.Card> cards = new();
-				cards.AddRange(Deck.ToList().GetRange(index, parts));
-				return new Lst<Card.Card>(cards);
-			}
-		}
-
-		private static Lst<Card.Card> CreateDeck()
-		{
-			Suit[] suits = (Suit[]) Enum.GetValues(typeof(Suit));
-			Value[] values = (Value[]) Enum.GetValues(typeof(Value));
-
-			Lst<Card.Card> deck = suits.Aggregate(deck,
-				(current1, suit) =>
-					values.Aggregate(current1, (current, value) => current.Add(new Card.Card(suit, value))));
-
-
-			return deck;
-		}
-
-		public override string ToString()
-		{
-			Arr<string> array = Deck
-				.Select(card => card.ToString())
-				.ToArray();
-
-			return string.Join(", ", array);
-		}
+		public string show => string.Join(", ", Deck.Select(_ => _.show));
 	}
 }
